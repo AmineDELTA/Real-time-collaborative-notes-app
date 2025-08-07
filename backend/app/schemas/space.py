@@ -1,0 +1,26 @@
+from pydantic import BaseModel
+from datetime import datetime
+from typing import Optional,List
+
+
+class SpaceBase(BaseModel):
+    name:str
+    description:Optional[str] = None
+    
+    
+class SpaceCreate(SpaceBase):
+    pass
+
+class SpaceUpdate(SpaceBase):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    
+    
+class SpaceOut(SpaceBase):
+    id:int
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        orm_mode = True
+    

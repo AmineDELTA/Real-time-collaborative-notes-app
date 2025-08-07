@@ -9,7 +9,7 @@ class Block(Base):
     id = Column(Integer, primary_key=True, index=True)
     space_id = Column(Integer, ForeignKey("spaces.id"), nullable=False)
     type = Column(String, nullable=False)
-    content = Column(JSON, nullable=False)
+    content = Column(String, nullable=False)
     order = Column(Integer, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, nullable=False)
