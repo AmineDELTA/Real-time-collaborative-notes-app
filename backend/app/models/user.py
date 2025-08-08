@@ -9,9 +9,9 @@ class User(Base):
     username = Column(String(50), nullable=False, unique=True)
     email = Column(String(255), nullable=False, unique=True)
     password = Column(String(255), nullable=False)
-    created_at = Column(DateTime, nullable=False, default=func.now())
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
     
 
     spaces_owned = relationship("Space", back_populates="owner",cascade="all, delete-orphan")
-    membership = relationship("UserInSpace", back_populates="user", cascade="all, delete-orphan")
+    memberships = relationship("UserInSpace", back_populates="user", cascade="all, delete-orphan")
     blocks = relationship("Block", back_populates="owner", cascade="all, delete-orphan") 

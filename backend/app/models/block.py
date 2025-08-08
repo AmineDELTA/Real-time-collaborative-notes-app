@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, func
 from .base import Base
 from sqlalchemy.orm import relationship
 
@@ -12,9 +12,8 @@ class Block(Base):
     content = Column(String, nullable=False)
     order = Column(Integer, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime, nullable=False)
-    updated_at = Column(DateTime, nullable=True)
-
+    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=True, default=func.now(), onupdate=func.now())
     # Relationships
     space = relationship("Space", back_populates="blocks")
     owner = relationship("User", back_populates="blocks")

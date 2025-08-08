@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, func
 from sqlalchemy.orm import relationship
 from .base import Base
 
@@ -10,7 +10,7 @@ class UserInSpace(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     space_id = Column(Integer, ForeignKey("spaces.id"), nullable=False)
     role = Column(String, nullable=False)
-    joined_at = Column(DateTime, nullable=False)
+    joined_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
 
 
     user = relationship("User", back_populates="memberships")
