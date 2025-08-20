@@ -10,7 +10,7 @@ class BlockBase(BaseModel):
     
 class BlockCreate(BlockBase):
     space_id: int
-
+    #order: Optional[int] = 0
 
 class BlockUpdate(BaseModel):
     content: Optional[str] = None
@@ -19,10 +19,10 @@ class BlockUpdate(BaseModel):
     
 class BlockOut(BlockBase):
     id: int
-    creator_id: int
+    owner_id: int
     space_id: int
+    order: int
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}

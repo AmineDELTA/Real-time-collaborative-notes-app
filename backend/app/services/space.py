@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
-from models import Space
-from schemas import SpaceCreate, SpaceUpdate
+from app.models.space import Space
+from app.schemas.space import SpaceCreate, SpaceUpdate
 from datetime import datetime, timezone
+from app.models.user_in_space import UserInSpace, UserRole
 
 
 def create_space(db: Session, space_in: SpaceCreate, owner_id: int):
@@ -13,6 +14,17 @@ def create_space(db: Session, space_in: SpaceCreate, owner_id: int):
     db.add(db_space)
     db.commit()
     db.refresh(db_space)
+    
+    admin_membership = UserInSpace(
+        user_id=owner_id,
+        space_id=db_space.id,
+        role=UserRole.ADMIN,
+        is_creator=True,
+        joined_at=datetime.now(timezone.utc)
+    )
+    db.add(admin_membership)
+    db.commit()
+    db.refresh(admin_membership)
     return db_space
 
 
@@ -29,8 +41,11 @@ def update_space(db: Session, space_id: int, space_in: SpaceUpdate):
     if not db_space:
         return None
     
-    if space_in.name is not None:
-        db_space.name = space_in.name
+    update_data = space_in.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(db_space, key, value)
+
+    db_space.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(db_space)
@@ -40,8 +55,26 @@ def update_space(db: Session, space_id: int, space_in: SpaceUpdate):
 def delete_space(db: Session, space_id: int):
     db_space = db.query(Space).filter(Space.id == space_id).first()
     if not db_space:
-        return None
+        return False
 
     db.delete(db_space)
     db.commit()
-    return db_space
+    return True
+
+
+def get_spaces_by_user(db: Session, user_id: int):
+    #Get the spaces where the user is a member
+    spaces = db.query(Space).join(UserInSpace).filter(
+        UserInSpace.user_id == user_id
+    ).all()
+    
+    return spaces
+
+
+def get_user_spaces_with_roles(db: Session, user_id: int):
+    #Get spaces with the user's role in each one
+    result = db.query(Space, UserInSpace.role).join(UserInSpace).filter(
+        UserInSpace.user_id == user_id
+    ).all()
+    
+    return [{"space": space, "role": role} for space, role in result]

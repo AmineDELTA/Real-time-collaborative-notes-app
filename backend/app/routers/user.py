@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
 from app.schemas.user import UserCreate, UserOut, UserUpdate
-from app.services.user import create_user, get_user_by_id, get_all_users, get_user_by_email, update_user_db, delete_user_db
+from app.services.user import create_user, get_user,  get_user_by_email, update_user_db, delete_user_db
 from app.db.session import get_db
 
 router = APIRouter(
@@ -13,8 +13,8 @@ router = APIRouter(
 SessionDependency = Annotated[Session, Depends(get_db)]
 
 @router.get("/{user_id}", response_model=UserOut)
-def get_user(user_id: int, db: SessionDependency):
-    db_user = get_user_by_id(db, user_id)
+def get_user_by_id(user_id: int, db: SessionDependency):
+    db_user = get_user(db, user_id)
     if db_user is None:
         raise HTTPException(status_code=404, detail="User not found")
     return db_user
@@ -30,11 +30,11 @@ def build_user(user_in: UserCreate, db: SessionDependency):
 
 @router.put("/{user_id}", response_model=UserOut)
 def change_user(user_id: int, updated_data: UserUpdate, db: SessionDependency):
-    user = get_user_by_id(db, user_id)
+    user = get_user(db, user_id)
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    updated_user = update_user_db(db, user, updated_data)
+    updated_user = update_user_db(db, user_id, updated_data)
     return updated_user
 
 

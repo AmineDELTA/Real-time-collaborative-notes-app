@@ -1,15 +1,19 @@
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
-from models import Block
-from schemas import BlockCreate, BlockUpdate
+from app.models.block import Block
+from app.schemas.block import BlockCreate, BlockUpdate
 
 
 def create_block(db: Session, block_in: BlockCreate, owner_id: int, space_id: int):
+    max_order = db.query(func.max(Block.order)).filter(Block.space_id == space_id).scalar()
+    next_order = (max_order or 0) + 1
+    
     db_block = Block(
         space_id=space_id,
         type=block_in.type,
         content=block_in.content,
-        order=block_in.order,
+        order=next_order,
         owner_id=owner_id,
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc)

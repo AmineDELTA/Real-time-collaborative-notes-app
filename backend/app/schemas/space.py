@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional,List
+from typing import Optional
 
 
 class SpaceBase(BaseModel):
@@ -21,6 +21,5 @@ class SpaceOut(SpaceBase):
     created_at: datetime
     updated_at: datetime
     
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
     

@@ -1,25 +1,28 @@
 from pydantic import BaseModel
 from datetime import datetime
+from enum import Enum
 
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    PARTICIPANT = "participant"
+    VISITOR = "visitor"
 
 class UserInSpaceBase(BaseModel):
-    role: str
-    
-    
-class UserInSpaceCreate(UserInSpaceBase):
     user_id: int
     space_id: int
+    role: UserRole
+    
+class UserInSpaceCreate(UserInSpaceBase):
+    pass
     
     
 class UserInSpaceUpdate(BaseModel):
-    role: str
+    role: UserRole
     
     
 class UserInSpaceOut(UserInSpaceBase):
     id: int
-    user_id: int
-    space_id: int
     joined_at: datetime
+    is_creator: bool
 
-    class Config:
-        orm_mode = True
+    model_config = {"from_attributes": True}
