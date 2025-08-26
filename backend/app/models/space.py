@@ -15,4 +15,4 @@ class Space(Base):
 
     owner = relationship("User", back_populates="spaces_owned")
     blocks = relationship("Block", back_populates="space", cascade="all, delete-orphan")
-    memberships = relationship("UserInSpace", back_populates="space", cascade="all, delete-orphan")
+    memberships = relationship("UserInSpace", back_populates="space")

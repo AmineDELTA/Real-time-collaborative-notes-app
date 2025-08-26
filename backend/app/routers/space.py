@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import Annotated
+from typing import Annotated, List
 
 from app.models.user import User
 from app.schemas.space import SpaceCreate, SpaceOut, SpaceUpdate
-from app.services.space import create_space, get_space_by_id, update_space, delete_space, get_spaces_by_owner
+from app.services.space import create_space, get_space_by_id, get_spaces_by_user, get_user_spaces_with_roles, update_space, delete_space, get_spaces_by_owner
 from app.db.session import get_db
 from app.core.auth import get_current_user  # adjust with the auth module
 
@@ -62,3 +62,13 @@ def delete_existing_space(space_id: int, db: SessionDependency, current_user: Us
     if not deleted_space:
         raise HTTPException(status_code=404, detail="Space not found")
     return {"detail": "Space deleted successfully"}
+
+
+@router.get("/my-spaces", response_model=List[SpaceOut])
+def get_my_spaces(db: SessionDependency, current_user: UserDependency):
+    return get_spaces_by_user(db, current_user.id)
+
+
+@router.get("/my-spaces-with-roles")
+def get_my_spaces_with_roles(db: SessionDependency, current_user: UserDependency):
+    return get_user_spaces_with_roles(db, current_user.id)

@@ -13,5 +13,5 @@ class User(Base):
     
 
     spaces_owned = relationship("Space", back_populates="owner",cascade="all, delete-orphan")
-    memberships = relationship("UserInSpace", back_populates="user", cascade="all, delete-orphan")
-    blocks = relationship("Block", back_populates="owner", cascade="all, delete-orphan") 
+    memberships = relationship("UserInSpace", back_populates="user")
+    blocks = relationship("Block", back_populates="owner") 

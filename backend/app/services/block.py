@@ -3,6 +3,9 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from app.models.block import Block
 from app.schemas.block import BlockCreate, BlockUpdate
+from app.core.permissions import has_permission, Permission
+from fastapi import HTTPException
+from typing import List
 
 
 def create_block(db: Session, block_in: BlockCreate, owner_id: int, space_id: int):
@@ -33,9 +36,9 @@ def get_blocks_in_space(db: Session, space_id: int):
 
 
 def update_block(db: Session, block_id: int, block_in: BlockUpdate):
-    db_block = db.query(Block).filter(Block.id == block_id).first()
+    db_block = get_block_by_id(db, block_id)
     if not db_block:
-        return None
+        raise HTTPException(status_code=404, detail="Block not found")
 
     if block_in.type is not None:
         db_block.type = block_in.type
@@ -43,7 +46,6 @@ def update_block(db: Session, block_id: int, block_in: BlockUpdate):
         db_block.content = block_in.content
         
     db_block.updated_at = datetime.now(timezone.utc)
-
     db.commit()
     db.refresh(db_block)
     return db_block

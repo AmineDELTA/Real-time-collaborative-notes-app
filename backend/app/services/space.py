@@ -3,13 +3,15 @@ from app.models.space import Space
 from app.schemas.space import SpaceCreate, SpaceUpdate
 from datetime import datetime, timezone
 from app.models.user_in_space import UserInSpace, UserRole
+from typing import List, Dict, Any
 
 
 def create_space(db: Session, space_in: SpaceCreate, owner_id: int):
     db_space = Space(
         name=space_in.name,
         owner_id=owner_id,
-        created_at=datetime.now(timezone.utc)
+        created_at=datetime.now(timezone.utc),
+        updated_at=datetime.now(timezone.utc)
     )
     db.add(db_space)
     db.commit()
@@ -34,6 +36,11 @@ def get_space_by_id(db: Session, space_id: int):
 
 def get_spaces_by_owner(db: Session, owner_id: int):
     return db.query(Space).filter(Space.owner_id == owner_id).all()
+
+
+def get_spaces_by_user(db:Session, user_id:int):
+    spaces = db.query(Space).join(UserInSpace).filter(UserInSpace.user_id == user_id).all()
+    return spaces
 
 
 def update_space(db: Session, space_id: int, space_in: SpaceUpdate):
@@ -62,19 +69,6 @@ def delete_space(db: Session, space_id: int):
     return True
 
 
-def get_spaces_by_user(db: Session, user_id: int):
-    #Get the spaces where the user is a member
-    spaces = db.query(Space).join(UserInSpace).filter(
-        UserInSpace.user_id == user_id
-    ).all()
-    
-    return spaces
-
-
 def get_user_spaces_with_roles(db: Session, user_id: int):
-    #Get spaces with the user's role in each one
-    result = db.query(Space, UserInSpace.role).join(UserInSpace).filter(
-        UserInSpace.user_id == user_id
-    ).all()
-    
-    return [{"space": space, "role": role} for space, role in result]
+    result = db.query(Space, UserInSpace.role, UserInSpace.is_creator).join(UserInSpace).filter(UserInSpace.user_id == user_id).all()
+    return [{"space": space, "role": role.value, "is_creator": is_creator} for space, role, is_creator in result]
