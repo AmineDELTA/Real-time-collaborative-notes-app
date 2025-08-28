@@ -18,8 +18,8 @@ class UserInSpace(Base):
     is_creator = Column(Boolean, default=False, nullable=False)
     joined_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
 
-    __table_args__ = (
-        UniqueConstraint('user_id', 'space_id', name='unique_user_space'),)
 
     user = relationship("User", back_populates="memberships")
     space = relationship("Space", back_populates="memberships")
+    
+    __table_args__ = (UniqueConstraint('user_id', 'space_id', name='user_space_unique'),)

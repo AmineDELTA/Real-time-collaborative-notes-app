@@ -61,12 +61,11 @@ def update_space(db: Session, space_id: int, space_in: SpaceUpdate):
 
 def delete_space(db: Session, space_id: int):
     db_space = db.query(Space).filter(Space.id == space_id).first()
-    if not db_space:
-        return False
-
-    db.delete(db_space)
-    db.commit()
-    return True
+    if db_space:
+        db.delete(db_space)
+        db.commit()
+        return True
+    return False
 
 
 def get_user_spaces_with_roles(db: Session, user_id: int):

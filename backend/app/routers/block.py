@@ -54,13 +54,17 @@ def create_new_block(block_in: BlockCreate, db: SessionDependency, current_user:
     membership = get_space_membership(block_in.space_id, current_user, db)
     check_permission(membership, Permission.CREATE_BLOCKS)
     
-    max_order = db.query(func.max(Block.order)).filter(Block.space_id == block_in.space_id).scalar() or 0
-    
+    max_order = db.query(func.max(Block.order)).filter(Block.space_id == block_in.space_id).scalar()
+    if max_order is None:
+        new_order = 0
+    else:
+        new_order = max_order + 1
+
     db_block = Block(
         space_id=block_in.space_id,
         content=block_in.content,
         type=block_in.type,
-        order=max_order + 1,  # Auto-increment
+        order=new_order,  # Start from 0
         owner_id=current_user.id,
         created_at=datetime.now(timezone.utc),
         updated_at=datetime.now(timezone.utc)
@@ -102,28 +106,27 @@ def delete_existing_block(block_id: int, db: SessionDependency, current_user: Us
     block, membership = get_block_membership(block_id, current_user, db)
     check_permission(membership, Permission.DELETE_BLOCKS)
 
+    space_id = block.space_id  # Save before delete
     success = delete_block(db, block_id)  
     if not success:
         raise HTTPException(status_code=404, detail="Block not found")
-    return {"detail": "Block deleted successfully"}
+
+    # 🟢 Re-sequence orders for remaining blocks in the space
+    remaining_blocks = db.query(Block).filter(Block.space_id == space_id).order_by(Block.order).all()
+    for idx, b in enumerate(remaining_blocks):
+        b.order = idx
+    db.commit()
+
+    return {"detail": "Block deleted and order re-sequenced successfully"}
 
 
-@router.put("/space/{space_id}/reorder")
-def reorder_blocks(
-    space_id: int,
-    block_orders: dict,
-    db: SessionDependency, 
-    current_user: UserDependency
-):
+@router.post("/space/{space_id}/refresh-order")
+def refresh_block_order(space_id: int, db: SessionDependency, current_user: UserDependency):
     membership = get_space_membership(space_id, current_user, db)
     check_permission(membership, Permission.REORDER_BLOCKS)
-    
-    # Update block orders :)
-    for block_id, new_order in block_orders.items():
-        block = get_block_by_id(db, int(block_id))
-        if block and block.space_id == space_id:
-            block.order = new_order
-            block.updated_at = datetime.now(timezone.utc)
-    
+
+    blocks = db.query(Block).filter(Block.space_id == space_id).order_by(Block.order).all()
+    for idx, block in enumerate(blocks):
+        block.order = idx
     db.commit()
-    return {"detail": "Blocks reordered successfully"}
+    return {"detail": "Block order refreshed"}

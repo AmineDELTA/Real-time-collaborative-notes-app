@@ -4,10 +4,10 @@ from .base import Base
 from sqlalchemy.orm import relationship
 
 class BlockType(enum.Enum):
-    TEXT = "text"
-    HEADING = "heading"
-    BULLET_LIST = "bullet_list"
-    NUMBERED_LIST = "numbered_list"
+    TEXT = "TEXT"
+    HEADING = "HEADING"
+    BULLET_LIST = "BULLET_LIST"
+    NUMBERED_LIST = "NUMBERED_LIST"
 
 class Block(Base):
     __tablename__ = "blocks"

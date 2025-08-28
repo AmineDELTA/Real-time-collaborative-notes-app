@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import os
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
@@ -9,8 +10,9 @@ from typing import Annotated, Optional
 from app.db.session import get_db
 from app.schemas.user import UserOut
 from app.services.user import get_user_by_email
+from app.models.user import User
 
-SECRET_KEY = "mBY3UETByMJr1sqgFn0pzXm5vXYDN9B_hrT48jwxSO0"
+SECRET_KEY = os.getenv("SECRET") # .env!!!
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -45,7 +47,7 @@ def authenticate_user(db: Session, email: str, password: str):
     user = get_user_by_email(db, email)
     if not user:
         return None
-    if not verify_password(password, user.password):
+    if not verify_password(password, user.hashed_password):
         return None
     return user
 
@@ -77,3 +79,16 @@ def get_current_user(token: TokenDependency, db: SessionDependency):
 
 def get_current_active_user(current_user: Annotated[UserOut, Depends(get_current_user)]):  
     return current_user
+
+
+async def get_current_user_websocket(token: str, db: Session):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+        
+        user = get_user_by_email(db, email)
+        return user
+    except JWTError:
+        return None

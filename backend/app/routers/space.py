@@ -19,6 +19,16 @@ UserDependency = Annotated[User, Depends(get_current_user)]
 def create_new_space(space_in: SpaceCreate, db: SessionDependency, current_user: UserDependency):
     return create_space(db=db, space_in=space_in, owner_id=current_user.id)
     #creator automatically becomes an admin of the space.
+    
+    
+@router.get("/my-spaces", response_model=List[SpaceOut])
+def get_my_spaces(db: SessionDependency, current_user: UserDependency):
+    return get_spaces_by_user(db, current_user.id)
+
+@router.get("/my-spaces-with-roles")
+def get_my_spaces_with_roles(db: SessionDependency, current_user: UserDependency):
+    return get_user_spaces_with_roles(db, current_user.id)
+
 
 @router.get("/{space_id}", response_model=SpaceOut)
 def read_space(space_id: int, db: SessionDependency, current_user: UserDependency):
@@ -63,12 +73,3 @@ def delete_existing_space(space_id: int, db: SessionDependency, current_user: Us
         raise HTTPException(status_code=404, detail="Space not found")
     return {"detail": "Space deleted successfully"}
 
-
-@router.get("/my-spaces", response_model=List[SpaceOut])
-def get_my_spaces(db: SessionDependency, current_user: UserDependency):
-    return get_spaces_by_user(db, current_user.id)
-
-
-@router.get("/my-spaces-with-roles")
-def get_my_spaces_with_roles(db: SessionDependency, current_user: UserDependency):
-    return get_user_spaces_with_roles(db, current_user.id)
