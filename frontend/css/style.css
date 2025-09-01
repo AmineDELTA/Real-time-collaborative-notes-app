@@ -1,0 +1,42 @@
+body {
+    font-family: Cambria, bold;
+    margin: 2em;
+    background: #fbfbfb;
+}
+input, button, textarea, select {
+    margin: 0.5em 0;
+    padding: 0.5em;
+}
+#app {
+    max-width: 1000px;
+    margin: auto;
+    background: #cfcfcf;
+    padding: 2em;
+    border-radius: 8px;
+    box-shadow: 0 3px 9px #0001;
+}
+.block {
+    margin-bottom: 1em;
+    padding: 1em;
+    background: #e3e3e3;
+    border-radius: 4px;
+}
+textarea {
+    width: 90%;
+    min-height: 2em;
+}
+nav {
+    margin-bottom: 2em;
+}
+nav button {
+    margin-right: 1em;
+}
+#wslog {
+    background: #222;
+    color: #0f0;
+    padding: 1em;
+    font-size: 0.9em;
+    border-radius: 4px;
+    height: 100px;
+    overflow-y: auto;
+}

@@ -1,0 +1,210 @@
+<!-- Save as frontend.html and open in your browser -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Realtime Notes Frontend</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 2em;
+        }
+
+        input,
+        button,
+        textarea {
+            margin: 0.5em 0;
+        }
+
+        #blocks textarea {
+            width: 100%;
+            min-height: 2em;
+        }
+
+        .block {
+            margin-bottom: 1em;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Register / Login</h2>
+    <input id="username" placeholder="Username">
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="register()">Register</button>
+    <button onclick="login()">Login</button>
+    <div id="auth-status"></div>
+    <hr>
+
+    <h2>Spaces</h2>
+    <button onclick="listSpaces()">List My Spaces</button>
+    <input id="space-name" placeholder="New Space Name">
+    <button onclick="createSpace()">Create Space</button>
+    <ul id="spaces"></ul>
+    <hr>
+
+    <h2>Blocks in Space</h2>
+    <div>
+        <input id="block-content" placeholder="Block content">
+        <select id="block-type">
+            <option value="TEXT">TEXT</option>
+            <option value="HEADING">HEADING</option>
+            <option value="BULLET_LIST">BULLET_LIST</option>
+            <option value="NUMBERED_LIST">NUMBERED_LIST</option>
+        </select>
+        <button onclick="createBlock()">Add Block</button>
+    </div>
+    <div id="blocks"></div>
+    <hr>
+
+    <h2>WebSocket Log</h2>
+    <pre id="wslog"></pre>
+
+    <script>
+        // Set your backend URL here!
+        const BACKEND_URL = "http://localhost:8000";
+
+        let token = '';
+        let currentSpaceId = null;
+        let ws = null;
+
+        function setAuthStatus(msg) {
+            document.getElementById('auth-status').innerText = msg;
+        }
+
+        function register() {
+            fetch(`${BACKEND_URL}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: document.getElementById('username').value,
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value
+                })
+            }).then(r => r.json()).then(data => setAuthStatus('Registered: ' + JSON.stringify(data)));
+        }
+
+        function login() {
+            fetch(`${BACKEND_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `username=${document.getElementById('username').value}&password=${document.getElementById('password').value}`
+            }).then(r => r.json()).then(data => {
+                if (data.access_token) {
+                    token = data.access_token;
+                    setAuthStatus('Logged in!');
+                } else {
+                    setAuthStatus('Login failed: ' + JSON.stringify(data));
+                }
+            });
+        }
+
+        function listSpaces() {
+            fetch(`${BACKEND_URL}/spaces/my-spaces`, {
+                headers: { Authorization: 'Bearer ' + token }
+            }).then(r => r.json()).then(data => {
+                let ul = document.getElementById('spaces');
+                ul.innerHTML = '';
+                data.forEach(space => {
+                    let li = document.createElement('li');
+                    li.innerText = space.name + ' (id: ' + space.id + ')';
+                    li.onclick = () => selectSpace(space.id);
+                    ul.appendChild(li);
+                });
+            });
+        }
+
+        function createSpace() {
+            fetch(`${BACKEND_URL}/spaces/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Bearer ' + token
+                },
+                body: JSON.stringify({ name: document.getElementById('space-name').value })
+            }).then(r => r.json()).then(data => {
+                listSpaces();
+            });
+        }
+
+        function selectSpace(spaceId) {
+            currentSpaceId = spaceId;
+            listBlocks();
+            connectWS();
+        }
+
+        function listBlocks() {
+            fetch(`${BACKEND_URL}/blocks/space/${currentSpaceId}`, {
+                headers: { Authorization: 'Bearer ' + token }
+            }).then(r => r.json()).then(data => {
+                let div = document.getElementById('blocks');
+                div.innerHTML = '';
+                data.forEach(block => {
+                    let blockDiv = document.createElement('div');
+                    blockDiv.className = 'block';
+                    blockDiv.innerHTML = `<b>${block.type}</b> <textarea data-id="${block.id}">${block.content || ''}</textarea>
+        <button onclick="updateBlock(${block.id})">Save</button>`;
+                    div.appendChild(blockDiv);
+                });
+            });
+        }
+
+        function createBlock() {
+            fetch(`${BACKEND_URL}/blocks/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Bearer ' + token
+                },
+                body: JSON.stringify({
+                    space_id: currentSpaceId,
+                    type: document.getElementById('block-type').value,
+                    content: document.getElementById('block-content').value
+                })
+            }).then(r => r.json()).then(data => {
+                listBlocks();
+                if (ws) ws.send(JSON.stringify({ type: "block_update", block_id: data.id, content: data.content }));
+            });
+        }
+
+        function updateBlock(blockId) {
+            let textarea = document.querySelector(`textarea[data-id="${blockId}"]`);
+            fetch(`${BACKEND_URL}/blocks/${blockId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: 'Bearer ' + token
+                },
+                body: JSON.stringify({ content: textarea.value })
+            }).then(r => r.json()).then(data => {
+                if (ws) ws.send(JSON.stringify({ type: "block_update", block_id: blockId, content: textarea.value }));
+            });
+        }
+
+        function connectWS() {
+            if (ws) ws.close();
+            // Use ws:// for local dev, wss:// for production with HTTPS
+            let wsProto = BACKEND_URL.startsWith("https") ? "wss" : "ws";
+            let wsHost = BACKEND_URL.replace(/^https?:\/\//, "");
+            ws = new WebSocket(`${wsProto}://${wsHost}/ws/space/${currentSpaceId}?token=${token}`);
+            ws.onopen = () => wslog('WebSocket connected');
+            ws.onmessage = (event) => {
+                wslog('WS: ' + event.data);
+                // Optionally, auto-refresh blocks on update
+                try {
+                    let msg = JSON.parse(event.data);
+                    if (msg.type === "block_update") listBlocks();
+                } catch { }
+            };
+            ws.onclose = () => wslog('WebSocket closed');
+        }
+
+        function wslog(msg) {
+            document.getElementById('wslog').innerText += msg + '\n';
+        }
+    </script>
+</body>
+
+</html>
