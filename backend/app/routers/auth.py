@@ -11,7 +11,7 @@ from app.schemas.user import UserCreate, UserOut
 from app.services.user import create_user, get_user_by_email
 from app.core.auth import get_current_user
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(tags=["auth"])
 
 SessionDependency = Annotated[Session, Depends(get_db)]
 

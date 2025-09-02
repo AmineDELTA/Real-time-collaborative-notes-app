@@ -5,10 +5,7 @@ from app.schemas.user import UserCreate, UserOut, UserUpdate
 from app.services.user import create_user, get_user,  get_user_by_email, update_user_db, delete_user_db
 from app.db.session import get_db
 
-router = APIRouter(
-    prefix="/users",
-    tags=["Users"]
-)
+router = APIRouter(tags=["Users"])
 
 SessionDependency = Annotated[Session, Depends(get_db)]
 

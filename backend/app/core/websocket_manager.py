@@ -7,16 +7,12 @@ from datetime import datetime
 
 class ConnectionManager:
     def __init__(self):
-        # Store connections by space_id
         self.active_connections: Dict[int, Set[WebSocket]] = {}
-        # Store user info for each connection
         self.connection_users: Dict[WebSocket, dict] = {}
 
     async def connect(self, websocket: WebSocket, space_id: int, user_id: int, username: str):
-        """Connect user to a space"""
         await websocket.accept()
-        
-        # Add to space connections
+
         if space_id not in self.active_connections:
             self.active_connections[space_id] = set()
         self.active_connections[space_id].add(websocket)
@@ -38,7 +34,6 @@ class ConnectionManager:
         }, exclude_websocket=websocket)
 
     def disconnect(self, websocket: WebSocket):
-        """Disconnect user from space"""
         if websocket in self.connection_users:
             user_info = self.connection_users[websocket]
             space_id = user_info["space_id"]
@@ -60,14 +55,13 @@ class ConnectionManager:
             del self.connection_users[websocket]
 
     async def send_personal_message(self, message: dict, websocket: WebSocket):
-        """Send message to specific user"""
+        
         try:
             await websocket.send_text(json.dumps(message))
         except Exception:
             self.disconnect(websocket)
 
     async def broadcast_to_space(self, space_id: int, message: dict, exclude_websocket: WebSocket = None):
-        """Broadcast message to all users in a space"""
         if space_id not in self.active_connections:
             return
         
@@ -86,7 +80,6 @@ class ConnectionManager:
             self.disconnect(websocket)
 
     def get_space_users(self, space_id: int) -> List[dict]:
-        """Get all users currently connected to a space"""
         if space_id not in self.active_connections:
             return []
         

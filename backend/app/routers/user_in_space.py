@@ -11,10 +11,7 @@ from app.services.space import get_space_by_id
 from app.db.session import get_db
 from app.core.auth import get_current_user 
 
-router = APIRouter(
-    prefix="/user-in-space",
-    tags=["user_in_space"]
-)
+router = APIRouter(tags=["user_in_space"])
 
 SessionDependency = Annotated[Session, Depends(get_db)]
 UserDependency = Annotated[User, Depends(get_current_user)]

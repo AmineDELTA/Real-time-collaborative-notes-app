@@ -8,10 +8,7 @@ from app.services.space import create_space, get_space_by_id, get_spaces_by_user
 from app.db.session import get_db
 from app.core.auth import get_current_user  # adjust with the auth module
 
-router = APIRouter(
-    prefix="/spaces",
-    tags=["spaces"]
-)
+router = APIRouter(tags=["spaces"])
 SessionDependency = Annotated[Session, Depends(get_db)]
 UserDependency = Annotated[User, Depends(get_current_user)]
 

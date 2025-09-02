@@ -1,16 +1,14 @@
-from fastapi import WebSocket, APIRouter, WebSocketDisconnect, Depends, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi import WebSocket, APIRouter, WebSocketDisconnect, Depends
 from sqlalchemy.orm import Session
 from app.core.websocket_manager import manager
 from app.core.auth import get_current_user_websocket
 from app.db.session import get_db
 from app.models.user_in_space import UserInSpace
 from app.core.permissions import has_permission, Permission
-from app.services.block import update_block, get_block_by_id
+from app.services.block import update_block
 from app.schemas.block import BlockUpdate
 import json
-import asyncio
-from datetime import datetime, timezone
+from datetime import datetime
 
 router = APIRouter()
 
@@ -64,7 +62,6 @@ async def websocket_endpoint(
         manager.disconnect(websocket)
 
 async def handle_websocket_message(message: dict, websocket: WebSocket, current_user, membership, space_id: int, db: Session):
-    """Handle different types of WebSocket messages"""
     message_type = message.get("type")
     
     if message_type == "block_update":
@@ -80,7 +77,6 @@ async def handle_websocket_message(message: dict, websocket: WebSocket, current_
         await handle_block_selection(message, websocket, current_user, space_id)
 
 async def handle_block_update(message: dict, websocket: WebSocket, current_user, membership, space_id: int, db: Session):
-    """Handle real-time block content updates"""
     try:
         block_id = message.get("block_id")
         new_content = message.get("content")
@@ -88,7 +84,6 @@ async def handle_block_update(message: dict, websocket: WebSocket, current_user,
         if not block_id or new_content is None:
             return
         
-        # Check permissions
         if not has_permission(membership.role, Permission.EDIT_BLOCKS, membership.is_creator):
             await manager.send_personal_message({
                 "type": "error",
@@ -118,7 +113,6 @@ async def handle_block_update(message: dict, websocket: WebSocket, current_user,
         }, websocket)
 
 async def handle_cursor_position(message: dict, websocket: WebSocket, current_user, space_id: int):
-    """Handle cursor position updates"""
     block_id = message.get("block_id")
     position = message.get("position")
     
@@ -132,7 +126,6 @@ async def handle_cursor_position(message: dict, websocket: WebSocket, current_us
         }, exclude_websocket=websocket)
 
 async def handle_user_typing(message: dict, websocket: WebSocket, current_user, space_id: int):
-    """Handle typing indicators"""
     block_id = message.get("block_id")
     is_typing = message.get("is_typing", False)
     
@@ -146,7 +139,6 @@ async def handle_user_typing(message: dict, websocket: WebSocket, current_user, 
         }, exclude_websocket=websocket)
 
 async def handle_block_selection(message: dict, websocket: WebSocket, current_user, space_id: int):
-    """Handle block selection updates"""
     block_id = message.get("block_id")
     
     if block_id is not None:

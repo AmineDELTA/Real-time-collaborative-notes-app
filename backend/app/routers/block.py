@@ -13,10 +13,7 @@ from app.core.permissions import Permission, has_permission
 from app.models.user_in_space import UserInSpace
 from app.models.block import Block
 
-router = APIRouter(
-    prefix="/blocks",
-    tags=["blocks"]
-)
+router = APIRouter(tags=["blocks"])
 
 SessionDependency = Annotated[Session, Depends(get_db)]
 UserDependency = Annotated[User, Depends(get_current_user)]
