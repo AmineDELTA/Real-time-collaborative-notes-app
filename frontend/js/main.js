@@ -12,18 +12,35 @@ const app = document.getElementById('app');
 function renderLogin() {
     app.innerHTML = `
         <h2>Login / Register</h2>
-        <input id="username" placeholder="Username"><br>
-        <input id="email" placeholder="Email (register only)"><br>
-        <input id="password" type="password" placeholder="Password"><br>
-        <button id="loginBtn">Login</button>
-        <button id="registerBtn">Register</button>
+        
+        <!-- LOGIN SECTION - Only Email + Password -->
+        <div id="login-section">
+            <h3>Login</h3>
+            <input id="login-email" placeholder="Email" type="email"><br>
+            <input id="login-password" type="password" placeholder="Password"><br>
+            <button id="loginBtn">Login</button>
+        </div>
+        
+        <hr>
+        
+        <!-- REGISTER SECTION - Username + Email + Password -->
+        <div id="register-section">
+            <h3>Register</h3>
+            <input id="register-username" placeholder="Username"><br>
+            <input id="register-email" placeholder="Email" type="email"><br>
+            <input id="register-password" type="password" placeholder="Password"><br>
+            <button id="registerBtn">Register</button>
+        </div>
+        
         <div id="auth-status"></div>
     `;
+
+    // LOGIN - Only uses email and password
     document.getElementById('loginBtn').onclick = async () => {
         try {
             const data = await login(
-                document.getElementById('username').value,
-                document.getElementById('password').value
+                document.getElementById('login-email').value,     // Email only
+                document.getElementById('login-password').value   // Password only
             );
             token = data.access_token;
             renderSpaces();
@@ -31,12 +48,14 @@ function renderLogin() {
             document.getElementById('auth-status').innerText = e.detail || "Login failed";
         }
     };
+
+    // REGISTER - Uses username, email, and password
     document.getElementById('registerBtn').onclick = async () => {
         try {
             await register(
-                document.getElementById('username').value,
-                document.getElementById('email').value,
-                document.getElementById('password').value
+                document.getElementById('register-username').value,  // Username
+                document.getElementById('register-email').value,     // Email  
+                document.getElementById('register-password').value   // Password
             );
             document.getElementById('auth-status').innerText = "Registered! Now login.";
         } catch (e) {
@@ -99,19 +118,33 @@ async function renderBlocks(spaceId) {
         <pre id="wslog"></pre>
     `;
     document.getElementById('addBlockBtn').onclick = async () => {
-        await createBlock(
+        const newBlock = await createBlock(
             token,
             spaceId,
             document.getElementById('block-type').value,
             document.getElementById('block-content').value
         );
         loadBlocks();
-        if (ws) ws.send(JSON.stringify({ type: "block_update" }));
+        // Send proper WebSocket message for new block
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ 
+                type: "block_update",
+                block_id: newBlock.id,
+                content: document.getElementById('block-content').value
+            }));
+        }
     };
     loadBlocks();
     ws = connectToSpace(spaceId, token, (msg) => {
         wslog(JSON.stringify(msg));
-        if (msg.type === "block_update") loadBlocks();
+        // Fix: Check for the correct message type from backend
+        if (msg.type === "block_updated") {
+            loadBlocks();
+        }
+        // Also handle other message types
+        if (msg.type === "user_joined" || msg.type === "user_left") {
+            wslog(`User event: ${msg.username} ${msg.type.replace('user_', '')}`);
+        }
     });
 }
 
@@ -128,7 +161,14 @@ async function loadBlocks() {
         input.value = block.content;
         input.addEventListener('change', async (e) => {
             await updateBlock(token, block.id, e.target.value);
-            if (ws) ws.send(JSON.stringify({ type: "block_update" }));
+            // Send proper WebSocket message with actual data
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ 
+                    type: "block_update",
+                    block_id: block.id,
+                    content: e.target.value
+                }));
+            }
         });
         blockDiv.appendChild(input);
         div.appendChild(blockDiv);
