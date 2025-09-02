@@ -28,5 +28,11 @@ export async function updateBlock(token, blockId, content) {
     });
 }
 
-// Remove this DOM manipulation - it belongs in main.js
-// document.getElementById('addBlockBtn').onclick = async () => { ... }
+export async function deleteBlock(token, blockId) {
+    return apiFetch(`/blocks/${blockId}`, {
+        method: `DELETE`,
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        }
+    });
+}

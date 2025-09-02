@@ -1,36 +1,211 @@
-body {
-    font-family: Cambria, bold;
-    margin: 2em;
-    background: #fbfbfb;
+/* Reset and base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #ffffff;
+    color: #37352f;
+    line-height: 1.5;
+}
+
 input, button, textarea, select {
     margin: 0.5em 0;
     padding: 0.5em;
 }
+
 #app {
-    max-width: 1000px;
-    margin: auto;
-    background: #cfcfcf;
-    padding: 2em;
-    border-radius: 8px;
-    box-shadow: 0 3px 9px #0001;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
 }
+
+/* Compact top navigation with spaces */
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #e9e9e7;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+nav h1 {
+    font-size: 18px;
+    color: #37352f;
+    flex-shrink: 0;
+}
+
+.nav-center {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.nav-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* Compact spaces in nav */
+.nav-spaces {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #f8f8f7;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid #e9e9e7;
+}
+
+.nav-spaces-label {
+    font-size: 12px;
+    color: #6b6b6b;
+    font-weight: 500;
+}
+
+.nav-spaces-list {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-space-item {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    padding: 4px 8px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.nav-space-item:hover {
+    background: #e8f4ff;
+    border-color: #2383e2;
+}
+
+.nav-space-item.active {
+    background: #2383e2;
+    color: white;
+    border-color: #2383e2;
+}
+
+/* Compact create space */
+.nav-create-space {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-create-input {
+    width: 120px;
+    padding: 4px 8px;
+    border: 1px solid #e9e9e7;
+    border-radius: 12px;
+    font-size: 11px;
+    background: white;
+}
+
+.nav-create-btn {
+    padding: 4px 8px;
+    background: #2383e2;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.nav-create-btn:hover {
+    background: #1a6bc9;
+}
+
+nav button {
+    padding: 6px 12px;
+    background: #6b6b6b;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+nav button:hover {
+    background: #5a5a5a;
+}
+
+/* Rest of your existing styles stay the same */
 .block {
-    margin-bottom: 1em;
-    padding: 1em;
-    background: #e3e3e3;
-    border-radius: 4px;
+    position: relative;
+    margin-bottom: 2px;
+    transition: background-color 0.2s;
 }
+
+.block:hover {
+    background-color: #f7f6f3;
+}
+
+.block:hover .block-controls {
+    opacity: 1;
+}
+
+.block-controls {
+    position: absolute;
+    left: -40px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity 0.2s;
+    display: flex;
+    gap: 4px;
+}
+
+.block-control-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 4px;
+    background: #f1f1ef;
+    color: #6b6b6b;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.block-control-btn:hover {
+    background: #e9e9e7;
+}
+
+.block-control-btn.delete {
+    color: #e03e3e;
+}
+
+.block-control-btn.delete:hover {
+    background: #ffeaea;
+}
+
 textarea {
     width: 90%;
     min-height: 2em;
 }
-nav {
-    margin-bottom: 2em;
-}
-nav button {
-    margin-right: 1em;
-}
+
 #wslog {
     background: #222;
     color: #0f0;
@@ -39,4 +214,318 @@ nav button {
     border-radius: 4px;
     height: 100px;
     overflow-y: auto;
+}
+
+.auth-container {
+    max-width: 400px;
+    margin: 100px auto;
+    padding: 40px;
+    background: #fafafa;
+    border-radius: 8px;
+    border: 1px solid #e9e9e7;
+}
+
+.auth-section {
+    margin-bottom: 30px;
+}
+
+.auth-section h3 {
+    margin-bottom: 15px;
+    font-weight: 600;
+    color: #37352f;
+}
+
+.auth-section input {
+    width: 100%;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    border: 1px solid #e9e9e7;
+    border-radius: 6px;
+    font-size: 14px;
+    background: white;
+}
+
+.auth-section input:focus {
+    outline: none;
+    border-color: #2383e2;
+    box-shadow: 0 0 0 1px #2383e2;
+}
+
+.auth-section button {
+    width: 100%;
+    padding: 12px;
+    background: #2383e2;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.auth-section button:hover {
+    background: #1a6bc9;
+}
+
+.block-editor {
+    padding: 10px 0;
+}
+
+.add-block-container {
+    margin-bottom: 20px;
+}
+
+.add-block-input {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.add-block-input input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #e9e9e7;
+    border-radius: 6px;
+    font-size: 16px;
+}
+
+.add-block-input select {
+    padding: 12px 16px;
+    border: 1px solid #e9e9e7;
+    border-radius: 6px;
+    background: white;
+    font-size: 14px;
+}
+
+.add-block-input button {
+    padding: 12px 20px;
+    background: #2383e2;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.block-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    resize: none;
+    font-family: inherit;
+    line-height: 1.5;
+    padding: 3px 0;
+}
+
+.block-input.heading {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1.2;
+    padding: 6px 0;
+}
+
+.block-input.text {
+    font-size: 16px;
+    font-weight: 400;
+}
+
+.block-input.bullet-list {
+    font-size: 16px;
+    padding-left: 24px;
+    position: relative;
+}
+
+.block-input.bullet-list::before {
+    content: "•";
+    position: absolute;
+    left: 8px;
+    color: #6b6b6b;
+}
+
+.block-input.numbered-list {
+    font-size: 16px;
+    padding-left: 24px;
+    position: relative;
+}
+
+.block-input::placeholder {
+    color: #a8a8a8;
+}
+
+.websocket-log {
+    margin-top: 40px;
+    padding: 20px;
+    background: #f7f6f3;
+    border-radius: 6px;
+    border: 1px solid #e9e9e7;
+    display: none;
+}
+
+.websocket-log.show {
+    display: block;
+}
+
+.websocket-log h4 {
+    margin-bottom: 10px;
+    font-size: 14px;
+    color: #6b6b6b;
+}
+
+.websocket-log pre {
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    color: #6b6b6b;
+    max-height: 200px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+}
+
+.space-item {
+    cursor: pointer !important;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.space-item:hover {
+    background: #f1f1ef !important;
+    border-left-color: #2383e2;
+    transform: translateX(2px);
+}
+
+.space-item.active {
+    background: #e8f4ff !important;
+    border-left-color: #2383e2;
+}
+
+.space-name {
+    font-weight: 500;
+    margin-bottom: 1px;
+}
+
+.space-id {
+    font-size: 8.25px; /* 25% less: 11px → 8.25px */
+    color: #9b9b9b;
+}
+
+.no-spaces {
+    padding: 11.25px; /* 25% less: 15px → 11.25px */
+    text-align: center;
+    color: #6b6b6b;
+    font-style: italic;
+    font-size: 9.75px; /* 25% less: 13px → 9.75px */
+}
+
+/* Compact spaces section */
+.spaces-container {
+    margin-bottom: 20px; /* Reduced from 40px */
+    padding: 15px;
+    background: #fafafa;
+    border-radius: 8px;
+    border: 1px solid #e9e9e7;
+}
+
+.spaces-container h2 {
+    font-size: 18px; /* Smaller heading */
+    margin-bottom: 15px;
+    color: #37352f;
+}
+
+.space-input {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px; /* Reduced from 20px */
+}
+
+.space-input input {
+    flex: 1;
+    padding: 8px 12px; /* Smaller padding */
+    border: 1px solid #e9e9e7;
+    border-radius: 4px;
+    font-size: 13px; /* Smaller font */
+}
+
+.space-input button {
+    padding: 8px 16px; /* Smaller padding */
+    background: #2383e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px; /* Smaller font */
+    white-space: nowrap;
+}
+
+.spaces-list {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.spaces-list li {
+    padding: 8px 12px; /* Smaller padding */
+    background: white;
+    border: 1px solid #e9e9e7;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+    font-size: 13px; /* Smaller font */
+}
+
+.spaces-list li:hover {
+    background: #f1f1ef;
+    border-left-color: #2383e2;
+    transform: translateY(-1px);
+}
+
+.spaces-list li.active {
+    background: #e8f4ff;
+    border-left-color: #2383e2;
+}
+
+.block-editor {
+    padding: 10px 0; /* Reduced from 60px */
+}
+
+/* Collapsible spaces option */
+.spaces-toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7.5px 0; /* 25% less: 10px → 7.5px */
+    border-bottom: 1px solid #e9e9e7;
+    margin-bottom: 11.25px; /* 25% less: 15px → 11.25px */
+}
+
+.spaces-toggle:hover {
+    color: #2383e2;
+}
+
+.spaces-content {
+    transition: max-height 0.3s ease;
+    overflow: hidden;
+}
+
+.spaces-content.collapsed {
+    max-height: 0;
+}
+
+.spaces-content.expanded {
+    max-height: 375px; /* 25% less: 500px → 375px */
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    #app {
+        padding: 10px;
+    }
+    
+    .block-controls {
+        position: static;
+        opacity: 1;
+        margin-bottom: 8px;
+        justify-content: flex-end;
+    }
 }
