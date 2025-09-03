@@ -99,22 +99,31 @@ def update_existing_block(block_id: int, block_in: BlockUpdate, db: SessionDepen
 
 
 @router.delete("/{block_id}")
-def delete_existing_block(block_id: int, db: SessionDependency, current_user: UserDependency):
-    block, membership = get_block_membership(block_id, current_user, db)
-    check_permission(membership, Permission.DELETE_BLOCKS)
-
-    space_id = block.space_id  # Save before delete
-    success = delete_block(db, block_id)  
-    if not success:
+async def delete_block(
+    block_id: int, 
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    # Delete the block from database
+    block = db.query(Block).filter(Block.id == block_id).first()
+    if not block:
         raise HTTPException(status_code=404, detail="Block not found")
-
-    # 🟢 Re-sequence orders for remaining blocks in the space
-    remaining_blocks = db.query(Block).filter(Block.space_id == space_id).order_by(Block.order).all()
-    for idx, b in enumerate(remaining_blocks):
-        b.order = idx
+    
+    space_id = block.space_id  # Get space_id before deleting
+    db.delete(block)
     db.commit()
-
-    return {"detail": "Block deleted and order re-sequenced successfully"}
+    
+    # IMPORTANT: Broadcast the deletion to other users
+    from app.core.websocket_manager import manager
+    await manager.broadcast_to_space(space_id, {
+        "type": "block_deleted",
+        "block_id": block_id,
+        "deleted_by": current_user.id,
+        "deleted_by_username": current_user.username,
+        "timestamp": datetime.now().isoformat()
+    })
+    
+    return {"message": "Block deleted successfully"}
 
 
 @router.post("/space/{space_id}/refresh-order")

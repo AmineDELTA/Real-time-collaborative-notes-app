@@ -10,10 +10,9 @@ from typing import Annotated, Optional
 from app.db.session import get_db
 from app.schemas.user import UserOut
 from app.services.user import get_user_by_email
-from app.models.user import User
 
-SECRET_KEY = os.getenv("SECRET") # .env!!!
-ALGORITHM = "HS256"
+SECRET_KEY = os.getenv("SECRET")
+ALGORITHM = "HS256" # fix
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

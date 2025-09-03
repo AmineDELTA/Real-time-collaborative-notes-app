@@ -66,6 +66,8 @@ async def handle_websocket_message(message: dict, websocket: WebSocket, current_
     
     if message_type == "block_update":
         await handle_block_update(message, websocket, current_user, membership, space_id, db)
+    elif message_type == "block_deleted":
+        await handle_block_deletion(message, websocket, current_user, space_id)
     
     elif message_type == "cursor_position":
         await handle_cursor_position(message, websocket, current_user, space_id)
@@ -111,6 +113,16 @@ async def handle_block_update(message: dict, websocket: WebSocket, current_user,
             "type": "error",
             "message": f"Failed to update block: {str(e)}"
         }, websocket)
+
+async def handle_block_deletion(message: dict, websocket: WebSocket, current_user, space_id: int):
+    # Just broadcast the deletion to other users
+    await manager.broadcast_to_space(space_id, {
+        "type": "block_deleted", 
+        "block_id": message.get("block_id"),
+        "deleted_by": current_user.id,
+        "deleted_by_username": current_user.username,
+        "timestamp": datetime.now().isoformat()
+    }, exclude_websocket=websocket)
 
 async def handle_cursor_position(message: dict, websocket: WebSocket, current_user, space_id: int):
     block_id = message.get("block_id")
