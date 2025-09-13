@@ -17,10 +17,10 @@ def create_new_space(space_in: SpaceCreate, db: SessionDependency, current_user:
     return create_space(db=db, space_in=space_in, owner_id=current_user.id)
     #creator automatically becomes an admin of the space.
     
-    
 @router.get("/my-spaces", response_model=List[SpaceOut])
 def get_my_spaces(db: SessionDependency, current_user: UserDependency):
     return get_spaces_by_user(db, current_user.id)
+
 
 @router.get("/my-spaces-with-roles")
 def get_my_spaces_with_roles(db: SessionDependency, current_user: UserDependency):
@@ -45,8 +45,7 @@ def read_spaces(db: SessionDependency, current_user: UserDependency):
 
 
 @router.put("/{space_id}", response_model=SpaceOut)
-def update_existing_space(
-    space_id: int, space_in: SpaceUpdate, db: SessionDependency, current_user: UserDependency):
+def update_existing_space(space_id: int, space_in: SpaceUpdate, db: SessionDependency, current_user: UserDependency):
     db_space = get_space_by_id(db, space_id)
     if not db_space:
         raise HTTPException(status_code=404, detail="Space not found")

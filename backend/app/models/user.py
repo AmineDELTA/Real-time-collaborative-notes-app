@@ -1,18 +1,17 @@
 from sqlalchemy import Boolean, Column, Integer, String, DateTime, func
-from .base import Base
 from sqlalchemy.orm import relationship
+from .base import Base
 
 class User(Base):
     __tablename__ = "users"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String(50), nullable=False, unique=True)
-    email = Column(String(255), nullable=False, unique=True)
-    hashed_password = Column(String(255), nullable=False)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
-    
 
-    spaces_owned = relationship("Space", back_populates="owner",cascade="all, delete-orphan")
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String(50), unique=True, index=True)
+    email = Column(String(255), unique=True, index=True)
+    hashed_password = Column(String(255))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    is_active = Column(Boolean, default=True)
+
     memberships = relationship("UserInSpace", back_populates="user")
-    blocks = relationship("Block", back_populates="owner") 
+    spaces_owned = relationship("Space", back_populates="creator")
+    blocks = relationship("Block", back_populates="owner")

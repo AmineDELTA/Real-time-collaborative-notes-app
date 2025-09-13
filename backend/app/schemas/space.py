@@ -16,8 +16,10 @@ class SpaceUpdate(SpaceBase):
     description: Optional[str] = None
     
     
-class SpaceOut(SpaceBase):
-    id:int
+class SpaceOut(BaseModel):
+    id: int
+    name: str
+    owner_id: int
     created_at: datetime
     updated_at: datetime
     

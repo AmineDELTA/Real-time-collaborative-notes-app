@@ -50,21 +50,20 @@ def create_new_block(block_in: BlockCreate, db: SessionDependency, current_user:
     
     membership = get_space_membership(block_in.space_id, current_user, db)
     check_permission(membership, Permission.CREATE_BLOCKS)
-    
-    max_order = db.query(func.max(Block.order)).filter(Block.space_id == block_in.space_id).scalar()
-    if max_order is None:
-        new_order = 0
-    else:
-        new_order = max_order + 1
 
+    # Get max order for this space
+    max_order = db.query(func.max(Block.order)).filter(Block.space_id == block_in.space_id).scalar()
+    
+    now = datetime.now(timezone.utc)
+    
     db_block = Block(
         space_id=block_in.space_id,
         content=block_in.content,
         type=block_in.type,
-        order=new_order,  # Start from 0
         owner_id=current_user.id,
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc)
+        order=(max_order or 0) + 1,
+        created_at=now,    # Explicit safety
+        updated_at=now     # Explicit safety ; database has no default
     ) 
     db.add(db_block)
     db.commit()

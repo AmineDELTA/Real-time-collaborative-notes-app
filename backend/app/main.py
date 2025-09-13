@@ -5,12 +5,14 @@ from app.routers import websocket
 
 app = FastAPI(title="App_API", version="1.0.0")
 
+# Updated CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080"],
+    allow_origins=["http://localhost:3000"],  # Add both
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])

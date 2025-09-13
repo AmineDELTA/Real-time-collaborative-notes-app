@@ -1,7 +1,7 @@
-import enum
-from sqlalchemy import Column, Enum, Integer, String, DateTime, ForeignKey, Text, func
-from .base import Base
+from sqlalchemy import Column, Integer, String, Text, DateTime, func, ForeignKey, Enum
 from sqlalchemy.orm import relationship
+from .base import Base
+import enum
 
 class BlockType(enum.Enum):
     TEXT = "TEXT"
@@ -15,12 +15,12 @@ class Block(Base):
     id = Column(Integer, primary_key=True, index=True)
     space_id = Column(Integer, ForeignKey("spaces.id", ondelete="CASCADE"), nullable=False)
     type = Column(Enum(BlockType), nullable=False)
-    content = Column(Text, nullable=True)
-    order = Column(Integer, nullable=False)
+    content = Column(Text, nullable=False)
+    order = Column(Integer, default=0, nullable=False)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    created_at = Column(DateTime(timezone=True), nullable=False, default=func.now())
-    updated_at = Column(DateTime(timezone=True), nullable=False, default=func.now(), onupdate=func.now())
-    
+    created_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now())
+
     # Relationships
     space = relationship("Space", back_populates="blocks")
     owner = relationship("User", back_populates="blocks")

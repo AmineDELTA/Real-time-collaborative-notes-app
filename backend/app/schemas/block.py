@@ -17,7 +17,6 @@ class BlockBase(BaseModel):
     
 class BlockCreate(BlockBase):
     space_id: int
-    #order: Optional[int] = 0
 
 class BlockUpdate(BaseModel):
     content: Optional[str] = None
@@ -30,5 +29,6 @@ class BlockOut(BlockBase):
     space_id: int
     created_at: datetime
     updated_at: datetime
+    order: int  # Add this - your database has it!
 
     model_config = {"from_attributes": True}
