@@ -20,7 +20,6 @@ class RoleUpdate(BaseModel):
     role: UserRole
 
 class UserInSpaceOut(BaseModel):
-    id: int
     user_id: int
     space_id: int
     role: UserRole

@@ -47,7 +47,6 @@ def get_space_members(space_id: int, db: SessionDependency, current_user: UserDe
     result = []
     for member in members:
         result.append(UserInSpaceOut(
-            id=member.id,
             user_id=member.user_id,
             space_id=member.space_id,
             role=member.role,
@@ -79,13 +78,15 @@ def change_user_role(
     if not updated_membership:
         raise HTTPException(status_code=404, detail="User not found in space")
     
-    # Reload with user details
+    # Reload with user details - FIXED TO USE COMPOSITE KEY
     updated_membership = db.query(UserInSpace).options(
         joinedload(UserInSpace.user)
-    ).filter(UserInSpace.id == updated_membership.id).first()
+    ).filter(
+        UserInSpace.user_id == user_id,
+        UserInSpace.space_id == space_id
+    ).first()
     
     return UserInSpaceOut(
-        id=updated_membership.id,
         user_id=updated_membership.user_id,
         space_id=updated_membership.space_id,
         role=updated_membership.role,
@@ -133,13 +134,15 @@ def invite_user_to_space(
         update_data = UserInSpaceUpdate(role=role)
         new_membership = service_update_user_role(db, space_id, invited_user.id, update_data)
     
-    # Reload with user details
+    # Reload with user details - FIXED TO USE COMPOSITE KEY
     new_membership = db.query(UserInSpace).options(
         joinedload(UserInSpace.user)
-    ).filter(UserInSpace.id == new_membership.id).first()
+    ).filter(
+        UserInSpace.user_id == invited_user.id,
+        UserInSpace.space_id == space_id
+    ).first()
     
     return UserInSpaceOut(
-        id=new_membership.id,
         user_id=new_membership.user_id,
         space_id=new_membership.space_id,
         role=new_membership.role,
@@ -156,14 +159,53 @@ def remove_user_from_space_endpoint(
     db: SessionDependency, 
     current_user: UserDependency
 ):
-    space = check_admin_permission(current_user, space_id, db)
+    from app.services.space import delete_space
     
-    # Fixed: Use owner_id instead of created_by
-    if user_id == space.owner_id:
-        raise HTTPException(status_code=400, detail="Cannot remove space creator")
-    
-    remove_user_from_space(db, space_id, user_id)
-    return {"detail": "User removed from space successfully"}
+    try:
+        print(f"REMOVE REQUEST: User {current_user.id} trying to remove user {user_id} from space {space_id}")
+        
+        space = get_space_by_id(db, space_id)
+        if not space:
+            raise HTTPException(status_code=404, detail="Space not found")
+            
+        is_owner = user_id == space.owner_id
+        is_self_action = current_user.id == user_id
+        
+        print(f"Space owner: {space.owner_id}, Is user the owner: {is_owner}, Is self action: {is_self_action}")
+        
+        # Case 1: User is trying to leave and is the owner
+        if is_self_action and is_owner:
+            print(f"Owner {user_id} is leaving space {space_id}, deleting space")
+            # Delete the space when the owner leaves
+            delete_space(db, space_id)
+            return {"detail": "You have left the space and it has been deleted since you were the owner"}
+        
+        # Case 2: User is trying to leave and is not the owner
+        elif is_self_action:
+            print(f"User {user_id} is leaving space {space_id}")
+            remove_user_from_space(db, space_id, user_id)
+            return {"detail": "You have left the space successfully"}
+        
+        # Case 3: Admin is trying to remove someone else
+        else:
+            print(f"User {current_user.id} is trying to remove user {user_id} from space {space_id}")
+            # Check admin permissions
+            try:
+                space = check_admin_permission(current_user, space_id, db)
+            except Exception as e:
+                print(f"Permission check failed: {str(e)}")
+                raise HTTPException(status_code=403, detail="You don't have permission to remove users from this space")
+            
+            # Don't allow admins to remove the space owner
+            if is_owner:
+                raise HTTPException(status_code=400, detail="Cannot remove space owner")
+            
+            # Remove the user
+            remove_user_from_space(db, space_id, user_id)
+            return {"detail": "User removed from space successfully"}
+    except Exception as e:
+        print(f"Error in remove_user_from_space_endpoint: {str(e)}")
+        raise
 
 
 @router.put("/{membership_id}/role", response_model=UserInSpaceOut)
@@ -173,35 +215,11 @@ def update_user_role(
     db: SessionDependency,
     current_user: UserDependency
 ):
-    # Get the membership to update
-    membership = db.query(UserInSpace).filter(UserInSpace.id == membership_id).first()
-    if not membership:
-        raise HTTPException(status_code=404, detail="Membership not found")
+    # THIS ENDPOINT IS OBSOLETE - USE /space/{space_id}/user/{user_id}/role INSTEAD
     
-    # Check if current user has permission to change roles
-    current_membership = db.query(UserInSpace).filter(
-        UserInSpace.user_id == current_user.id,
-        UserInSpace.space_id == membership.space_id
-    ).first()
-    
-    if not current_membership or not current_membership.is_creator:
-        raise HTTPException(status_code=403, detail="Only space creators can change roles")
-    
-    # Update using service function
-    updated_membership = service_update_user_role(db, membership.space_id, membership.user_id, role_update)
-    
-    # Reload with user details
-    updated_membership = db.query(UserInSpace).options(
-        joinedload(UserInSpace.user)
-    ).filter(UserInSpace.id == updated_membership.id).first()
-    
-    return UserInSpaceOut(
-        id=updated_membership.id,
-        user_id=updated_membership.user_id,
-        space_id=updated_membership.space_id,
-        role=updated_membership.role,
-        is_creator=updated_membership.is_creator,
-        joined_at=updated_membership.joined_at,
-        username=updated_membership.user.username if updated_membership.user else None,
-        email=updated_membership.user.email if updated_membership.user else None
+    # This endpoint cannot work since UserInSpace doesn't have an id field
+    # We'll return a clear error message
+    raise HTTPException(
+        status_code=400, 
+        detail="This endpoint is deprecated. Please use /space/{space_id}/user/{user_id}/role instead"
     )

@@ -36,25 +36,43 @@ def get_users_in_space(db: Session, space_id: int):
     return db.query(UserInSpace).filter(UserInSpace.space_id == space_id).all()
 
 def get_users_in_space_with_details(db: Session, space_id: int):
-    """Get all users in a space with their user details"""
     return db.query(UserInSpace).options(
         joinedload(UserInSpace.user)
     ).filter(UserInSpace.space_id == space_id).all()
 
 
-def remove_user_from_space(db: Session, user_id: int, space_id: int):
-    membership = db.query(UserInSpace).filter(
-        UserInSpace.user_id == user_id,
-        UserInSpace.space_id == space_id
-    ).first()
-    if membership:
-        db.delete(membership)
-        db.commit()
-    return membership
+def remove_user_from_space(db: Session, space_id: int, user_id: int):
+    """Remove a user from a space.
+    
+    Parameters:
+    - db: Database session
+    - space_id: ID of the space
+    - user_id: ID of the user to remove
+    
+    Returns the removed membership or None if not found.
+    """
+    try:
+        print(f"Removing user {user_id} from space {space_id}")
+        membership = db.query(UserInSpace).filter(
+            UserInSpace.user_id == user_id,
+            UserInSpace.space_id == space_id
+        ).first()
+        
+        if membership:
+            print(f"Found membership: {membership.user_id} in space {membership.space_id}")
+            db.delete(membership)
+            db.commit()
+            return membership
+        else:
+            print(f"No membership found for user {user_id} in space {space_id}")
+            return None
+    except Exception as e:
+        print(f"Error removing user from space: {str(e)}")
+        db.rollback()
+        raise
 
 
 def update_user_role(db: Session, space_id: int, user_id: int, updates: UserInSpaceUpdate):
-    """Update user role and permissions in a space"""
     user_in_space = db.query(UserInSpace).filter(
         UserInSpace.space_id == space_id,
         UserInSpace.user_id == user_id
@@ -67,7 +85,6 @@ def update_user_role(db: Session, space_id: int, user_id: int, updates: UserInSp
     if updates.role is not None:
         user_in_space.role = updates.role
     
-    # Update creator status if provided (be careful with this!)
     if updates.is_creator is not None:
         user_in_space.is_creator = updates.is_creator
     
@@ -76,7 +93,6 @@ def update_user_role(db: Session, space_id: int, user_id: int, updates: UserInSp
     return user_in_space
 
 def check_user_permission(db: Session, user_id: int, space_id: int, required_role: UserRole = UserRole.VISITOR):
-    """Check if user has sufficient permissions in a space"""
     membership = db.query(UserInSpace).filter(
         UserInSpace.user_id == user_id,
         UserInSpace.space_id == space_id
@@ -87,11 +103,10 @@ def check_user_permission(db: Session, user_id: int, space_id: int, required_rol
     
     if membership.is_creator or membership.role == UserRole.ADMIN:
         return True
-    
-    # Check role hierarchy: ADMIN > PARTICIPANT > VISITOR
+
     role_hierarchy = {
-        UserRole.VISITOR: 1,      # Changed from VIEWER
-        UserRole.PARTICIPANT: 2,  # Changed from EDITOR
+        UserRole.VISITOR: 1,
+        UserRole.PARTICIPANT: 2,
         UserRole.ADMIN: 3
     }
     

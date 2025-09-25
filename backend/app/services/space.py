@@ -60,12 +60,40 @@ def update_space(db: Session, space_id: int, space_in: SpaceUpdate):
 
 
 def delete_space(db: Session, space_id: int):
-    db_space = db.query(Space).filter(Space.id == space_id).first()
-    if db_space:
-        db.delete(db_space)
-        db.commit()
-        return True
-    return False
+    """Delete a space and all related records.
+    
+    Args:
+        db: Database session
+        space_id: ID of the space to delete
+        
+    Returns:
+        bool: True if space was deleted, False if it was not found
+    """
+    try:
+        print(f"Deleting space {space_id}")
+        db_space = db.query(Space).filter(Space.id == space_id).first()
+        if db_space:
+            # First delete all related records (CASCADE should handle this but just to be safe)
+            from sqlalchemy import text
+            
+            # Delete any blocks in this space
+            db.execute(text(f"DELETE FROM blocks WHERE space_id = {space_id}"))
+            
+            # Delete any user memberships for this space
+            db.execute(text(f"DELETE FROM users_in_spaces WHERE space_id = {space_id}"))
+            
+            # Finally delete the space
+            db.delete(db_space)
+            db.commit()
+            print(f"Space {space_id} deleted successfully")
+            return True
+        else:
+            print(f"Space {space_id} not found")
+            return False
+    except Exception as e:
+        print(f"Error deleting space: {str(e)}")
+        db.rollback()
+        raise
 
 
 def get_user_spaces_with_roles(db: Session, user_id: int):

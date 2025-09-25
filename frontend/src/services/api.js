@@ -96,23 +96,37 @@ export const authAPI = {
     localStorage.removeItem('user');
   },
 
-  // Get current user info - we'll use a different approach
+  // Get current user info with complete user data including ID
   getCurrentUser: async () => {
-    // Since there's no /users/me endpoint, we'll decode the JWT token
-    // to get user info, or use the refresh endpoint which should return user info
     try {
-      const response = await api.post('/auth/refresh');
-      // The refresh endpoint should return user info, but if not, we'll handle it
+      // Call the users/me endpoint to get the complete user data including ID
+      const response = await api.get('/users/me');
+      console.log("User data from /users/me:", response.data);
       return response.data;
     } catch (error) {
-      // If refresh fails, try to get user info from token
-      const token = localStorage.getItem('access_token');
-      if (token) {
-        // Decode JWT token to get user email
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        return { email: payload.sub };
+      console.error("Error fetching user data:", error);
+      
+      // If the /users/me endpoint fails, try to refresh the token
+      try {
+        await api.post('/auth/refresh');
+        // After refreshing, try /users/me again
+        const retryResponse = await api.get('/users/me');
+        console.log("User data after refresh:", retryResponse.data);
+        return retryResponse.data;
+      } catch (refreshError) {
+        console.error("Refresh failed:", refreshError);
+        // Last resort - try to get at least the email from the token
+        const token = localStorage.getItem('access_token');
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            return { email: payload.sub };
+          } catch (tokenError) {
+            console.error("Token parsing failed:", tokenError);
+          }
+        }
+        throw error;
       }
-      throw error;
     }
   }
 };
@@ -153,7 +167,25 @@ export const spacesAPI = {
   deleteSpace: async (spaceId) => {
     const response = await api.delete(`/spaces/${spaceId}`);
     return response.data;
-  }
+  },
+
+  // Method to get all members of a space
+  getSpaceMembers: async (spaceId) => {
+    const response = await api.get(`/spaces/${spaceId}/members`);
+    return response.data;
+  },
+
+  // Method to invite a user to a space
+  inviteToSpace: async (spaceId, email) => {
+    const response = await api.post(`/spaces/${spaceId}/members`, { email });
+    return response.data;
+  },
+
+  // Method to remove a user from a space
+  removeFromSpace: async (spaceId, userId) => {
+    const response = await api.delete(`/spaces/${spaceId}/members/${userId}`);
+    return response.data;
+  },
 };
 
 // Blocks API functions
@@ -270,10 +302,31 @@ export const spaceMembersAPI = {
     return response.data;
   },
 
-  // Remove user from space
+  // Remove user from space or delete space if owner leaves
   removeUserFromSpace: async (spaceId, userId) => {
-    const response = await api.delete(`/user-in-space/space/${spaceId}/user/${userId}`);
-    return response.data;
+    try {
+      const response = await api.delete(`/user-in-space/space/${spaceId}/user/${userId}`);
+      console.log("User removed successfully:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error removing user from space:", error);
+      
+      // Check if there's a response with details
+      if (error.response && error.response.data) {
+        console.error("Server response error:", error.response.data);
+        // If error contains a message about owner leaving, transform it to a clearer message
+        if (error.response.data.detail && error.response.data.detail.includes('space owner')) {
+          throw new Error('As the space owner, you cannot leave. Use the Delete Space option instead.');
+        }
+      }
+      
+      // Handle CORS errors specifically
+      if (error.message === 'Network Error') {
+        throw new Error('Connection error - please check that the backend server is running and CORS is properly configured.');
+      }
+      
+      throw error;
+    }
   },
 
   // Invite user to space
